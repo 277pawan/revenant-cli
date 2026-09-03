@@ -1,0 +1,31 @@
+# Phase 1 config — lives in the repo root (NOT under .github/workflows/).
+# This file tells the CLI which database to talk to and what "valid" means.
+#
+# It does not read your application source code. Revenant only connects
+# to a live Postgres and runs SQL.
+#
+# connection uses ${DATABASE_URL} so the password never sits in git.
+# Put the real URL in .env (see .env.example) or export it in your shell:
+#   export DATABASE_URL='postgres://USER:PASS@localhost:5432/revenant_demo?sslmode=disable'
+
+plan: local-demo
+
+database:
+  engine: postgres
+  connection: ${DATABASE_URL}
+
+checks:
+  - type: schema
+    expect_tables:
+      - customers
+      - orders
+
+  - type: row_count
+    table: orders
+    min: 1
+
+  # Stub — runner already dispatches this type. Implement the SQL in
+  # internal/checks/foreignkey.go, then uncomment:
+  # - type: foreign_key
+  #   table: orders
+  #   references: customers
