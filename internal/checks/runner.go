@@ -42,6 +42,10 @@ func RunAll(conn *pgx.Conn, items []config.Check) ([]Result, error) {
 			batch, err = RowCount(ctx, conn, item)
 		case "foreign_key":
 			batch, err = ForeignKey(ctx, conn, item)
+		case "golden_query":
+			batch, err = Golden(ctx, conn, item)
+		case "freshness":
+			batch, err = Freshness(ctx, conn, item)
 		default:
 			return nil, fmt.Errorf("checks[%d]: unknown type %q", i, item.Type)
 		}

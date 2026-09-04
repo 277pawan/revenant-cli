@@ -1,3 +1,4 @@
+// Package checks
 package checks
 
 import (

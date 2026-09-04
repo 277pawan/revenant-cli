@@ -5,12 +5,12 @@ import (
 	"unicode"
 )
 
-// safeIdent allows only simple Postgres identifiers: letters, digits, underscore.
+// SafeIdent allows only simple Postgres identifiers: letters, digits, underscore.
 //
 // This is the guard that lets us put a table name into SQL without quoting
 // tricks. If you need "Order Items" or schema.table, extend this later
 // instead of concatenating raw yaml into queries.
-func safeIdent(name string) error {
+func SafeIdent(name string) error {
 	if name == "" {
 		return fmt.Errorf("empty identifier")
 	}

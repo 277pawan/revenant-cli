@@ -1,7 +1,7 @@
 // Package report writes the durable evidence file for a verify run.
 //
-// Phase 1 is JSON only. Markdown / Prometheus belong in this package later
-// as extra Write* functions — keep the Report struct the single source of truth.
+// JSON is the machine-readable report. Markdown is in markdown.go.
+// Prometheus is still out of scope (paid/later). Keep Report the single source of truth.
 package report
 
 import (

@@ -16,3 +16,11 @@ checks:
   - type: row_count
     table: orders
     min: 1
+
+  - type: foreign_key
+    table: orders
+    references: customers
+
+  - type: golden_query
+    query: "SELECT count(*) FROM orders"
+    expect_min: 1

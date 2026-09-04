@@ -20,7 +20,7 @@ func RowCount(ctx context.Context, conn *pgx.Conn, item config.Check) ([]Result,
 	if item.Min == nil {
 		return nil, fmt.Errorf("row_count check needs min")
 	}
-	if err := safeIdent(item.Table); err != nil {
+	if err := SafeIdent(item.Table); err != nil {
 		return nil, err
 	}
 

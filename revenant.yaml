@@ -1,4 +1,4 @@
-# Phase 1 config — lives in the repo root (NOT under .github/workflows/).
+# Phase 2 config — lives in the repo root (NOT under .github/workflows/).
 # This file tells the CLI which database to talk to and what "valid" means.
 #
 # It does not read your application source code. Revenant only connects
@@ -24,8 +24,10 @@ checks:
     table: orders
     min: 1
 
-  # Stub — runner already dispatches this type. Implement the SQL in
-  # internal/checks/foreignkey.go, then uncomment:
-  # - type: foreign_key
-  #   table: orders
-  #   references: customers
+  - type: foreign_key
+    table: orders
+    references: customers
+
+  - type: golden_query
+    query: "SELECT count(*) FROM orders"
+    expect_min: 1

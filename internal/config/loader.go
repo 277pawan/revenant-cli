@@ -28,11 +28,12 @@ type Database struct {
 // Check is a *union* of every check type we support.
 // Unused fields stay empty depending on `type`.
 //
-//   type: schema      -> ExpectTables
-//   type: row_count   -> Table, Min
-//   type: foreign_key -> Table, References  (stub in checks/foreignkey.go)
+//   type: schema       -> ExpectTables
+//   type: row_count    -> Table, Min
+//   type: foreign_key  -> Table, References
+//   type: golden_query -> Query, ExpectMin
 //
-// When you add golden_query later, add Query / ExpectMin here and a new
+// When you add freshness/RPO later, add Column / MaxAge here and a new
 // case in internal/checks/runner.go — you do not need a new yaml file format.
 type Check struct {
 	Type         string   `yaml:"type"`
@@ -40,6 +41,10 @@ type Check struct {
 	Table        string   `yaml:"table,omitempty"`
 	Min          *int     `yaml:"min,omitempty"` // pointer so we can tell "missing" from "0"
 	References   string   `yaml:"references,omitempty"`
+	Query        string   `yaml:"query,omitempty"`
+	ExpectMin    *int     `yaml:"expect_min,omitempty"`
+	Column       string   `yaml:"column,omitempty"`
+	MaxAge       string   `yaml:"max_age,omitempty"`
 }
 
 // Load reads path, unmarshals YAML, and expands ${ENV} in the connection string.

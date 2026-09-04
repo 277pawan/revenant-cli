@@ -16,9 +16,10 @@ import (
 
 // Flags for `revenant verify`. Cobra binds these in init() below.
 var (
-	configPath string // --config  path to revenant.yaml
-	planName   string // --plan    optional; must match yaml "plan:" if set
-	reportPath string // --output  where to write report.json
+	configPath   string // --config   path to revenant.yaml
+	planName     string // --plan     optional; must match yaml "plan:" if set
+	reportPath   string // --output   where to write report.json
+	markdownPath string // --markdown where to write report.md
 )
 
 // verifyCmd is the Phase 1 heart of the product:
@@ -28,7 +29,7 @@ var (
 //  3. connect to Postgres
 //  4. run each check
 //  5. print a human summary
-//  6. write report.json
+//  6. write report.json and report.md
 //  7. exit 1 if any check failed (so CI can use this later)
 var verifyCmd = &cobra.Command{
 	Use:          "verify",
@@ -44,6 +45,7 @@ func init() {
 	verifyCmd.Flags().StringVarP(&configPath, "config", "c", "revenant.yaml", "path to revenant.yaml")
 	verifyCmd.Flags().StringVar(&planName, "plan", "", "optional plan name; must match revenant.yaml if set")
 	verifyCmd.Flags().StringVarP(&reportPath, "output", "o", "report.json", "where to write the JSON report")
+	verifyCmd.Flags().StringVar(&markdownPath, "markdown", "report.md", "where to write the Markdown report")
 }
 
 func runVerify(cmd *cobra.Command, args []string) error {
@@ -91,9 +93,14 @@ func runVerify(cmd *cobra.Command, args []string) error {
 	if err := report.WriteJSON(reportPath, rep); err != nil {
 		return err
 	}
+	if err := report.WriteMarkdown(markdownPath, rep); err != nil {
+		return err
+	}
 
 	fmt.Printf("\nRestore Validation: %s\n", rep.Status)
+	fmt.Printf("Recovery Time (RTO): %s\n", rep.Duration)
 	fmt.Printf("Wrote %s\n", reportPath)
+	fmt.Printf("Wrote %s\n", markdownPath)
 
 	if rep.Status != report.StatusPass {
 		// Returning an error makes Cobra exit non-zero.
