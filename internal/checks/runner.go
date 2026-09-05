@@ -50,7 +50,12 @@ func RunAll(conn *pgx.Conn, items []config.Check) ([]Result, error) {
 			return nil, fmt.Errorf("checks[%d]: unknown type %q", i, item.Type)
 		}
 		if err != nil {
-			return nil, fmt.Errorf("checks[%d] type=%s: %w", i, item.Type, err)
+			out = append(out, Result{
+				Name:    fmt.Sprintf("check[%d]:%s", i, item.Type),
+				Status:  StatusFail,
+				Message: fmt.Sprintf("%s check error: %v", item.Type, err),
+			})
+			continue
 		}
 		out = append(out, batch...)
 	}

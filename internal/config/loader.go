@@ -17,6 +17,7 @@ import (
 type File struct {
 	Plan     string   `yaml:"plan"`
 	Database Database `yaml:"database"`
+	Recovery Recovery `yaml:"recovery,omitempty"`
 	Checks   []Check  `yaml:"checks"`
 }
 
@@ -25,13 +26,22 @@ type Database struct {
 	Connection string `yaml:"connection"` // usually "${DATABASE_URL}"
 }
 
+type Recovery struct {
+	Engine               string `yaml:"engine,omitempty"`                 // "aws-rds" or "none"
+	SourceIdentifier     string `yaml:"source_identifier,omitempty"`      // RDS instance identifier or snapshot ARN
+	SandboxInstanceClass string `yaml:"sandbox_instance_class,omitempty"` // e.g. "db.t4g.micro" or "db.t3.micro" for AWS free tier
+	MaxSandboxAge        string `yaml:"max_sandbox_age,omitempty"`        // e.g. "2h" for reaper
+	Region               string `yaml:"region,omitempty"`                 // AWS region e.g. "us-east-1"
+	UseFreetier          bool   `yaml:"use_freetier,omitempty"`           // If true, uses db.t3.micro (AWS free-tier compatible) + minimal storage
+}
+
 // Check is a *union* of every check type we support.
 // Unused fields stay empty depending on `type`.
 //
-//   type: schema       -> ExpectTables
-//   type: row_count    -> Table, Min
-//   type: foreign_key  -> Table, References
-//   type: golden_query -> Query, ExpectMin
+//	type: schema       -> ExpectTables
+//	type: row_count    -> Table, Min
+//	type: foreign_key  -> Table, References
+//	type: golden_query -> Query, ExpectMin
 //
 // When you add freshness/RPO later, add Column / MaxAge here and a new
 // case in internal/checks/runner.go — you do not need a new yaml file format.
@@ -69,16 +79,30 @@ func Load(path string) (*File, error) {
 		return nil, fmt.Errorf("revenant.yaml: at least one check is required")
 	}
 
-	cfg.Database.Connection = expandEnv(cfg.Database.Connection)
-	if cfg.Database.Connection == "" {
-		return nil, fmt.Errorf("database.connection expanded to empty string (is DATABASE_URL set?)")
+	var missing []string
+	cfg.Database.Connection, missing = expandEnv(cfg.Database.Connection)
+	for _, name := range missing {
+		if name == "SANDBOX_ENDPOINT" && cfg.Recovery.Engine == "aws-rds" {
+			continue
+		}
+		return nil, fmt.Errorf("database.connection references unset environment variable %q", name)
 	}
 
 	return &cfg, nil
 }
 
-// expandEnv supports the yaml style we document: ${DATABASE_URL}
-// os.ExpandEnv already understands $FOO and ${FOO}.
-func expandEnv(s string) string {
-	return strings.TrimSpace(os.ExpandEnv(s))
+// expandEnv supports the yaml style we document: ${DATABASE_URL}.
+// Missing variables are retained so AWS can fill SANDBOX_ENDPOINT after it
+// discovers the restored instance.
+func expandEnv(s string) (string, []string) {
+	var missing []string
+	expanded := os.Expand(s, func(name string) string {
+		value, ok := os.LookupEnv(name)
+		if !ok {
+			missing = append(missing, name)
+			return "${" + name + "}"
+		}
+		return value
+	})
+	return strings.TrimSpace(expanded), missing
 }

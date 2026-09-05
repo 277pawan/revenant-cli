@@ -14,10 +14,14 @@ import (
 
 const connectTimeout = 10 * time.Second
 
-// Connect opens a single Postgres connection.
+// Connection wraps pgx.Conn for clean resource management
+type Connection struct {
+	conn *pgx.Conn
+}
+
+// Connect opens a single Postgres connection using a connection string.
 //
-// Phase 1 uses one connection (plenty for a handful of checks). A pool
-// (pgxpool) is only worth it when we restore RDS and run many queries.
+// Deprecated: Use ConnectURL instead (same function, clearer name).
 func Connect(connectionString string) (*pgx.Conn, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), connectTimeout)
 	defer cancel()
@@ -33,4 +37,35 @@ func Connect(connectionString string) (*pgx.Conn, error) {
 	}
 
 	return conn, nil
+}
+
+// ConnectURL opens a single Postgres connection using a connection string.
+//
+// Phase 1 uses one connection (plenty for a handful of checks). A pool
+// (pgxpool) is only worth it when we restore RDS and run many queries.
+func ConnectURL(connectionString string) (*Connection, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), connectTimeout)
+	defer cancel()
+
+	conn, err := pgx.Connect(ctx, connectionString)
+	if err != nil {
+		return nil, fmt.Errorf("postgres connect: %w", err)
+	}
+
+	if err := conn.Ping(ctx); err != nil {
+		conn.Close(ctx)
+		return nil, fmt.Errorf("postgres ping: %w", err)
+	}
+
+	return &Connection{conn: conn}, nil
+}
+
+// Conn returns the underlying pgx.Conn for use by checks
+func (c *Connection) Conn() *pgx.Conn {
+	return c.conn
+}
+
+// Close closes the connection
+func (c *Connection) Close(ctx context.Context) error {
+	return c.conn.Close(ctx)
 }

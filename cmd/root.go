@@ -8,7 +8,6 @@ import (
 
 // rootCmd is the command users get when they type just `revenant` with no
 // subcommand. It does not run a verify itself — that lives in verify.go.
-//
 var rootCmd = &cobra.Command{
 	Use:   "revenant",
 	Short: "Prove that a database restore is actually usable",
@@ -16,9 +15,10 @@ var rootCmd = &cobra.Command{
 revenant.yaml, prints PASS/FAIL, and writes report.json / report.md.
 
   revenant init     scaffold yaml from a live database
+	revenant migrate  create application tables and use the models
+	revenant snapshot  check the source database and create an RDS snapshot
   revenant verify   run those checks
-
-Snapshot restore and AWS RDS come later — the check engine stays the same.`,
+  revenant reap     clean up lingering orphaned cloud sandboxes`,
 }
 
 // Execute is called from main.go. Cobra prints the error and we exit 1 so

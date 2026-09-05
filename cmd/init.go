@@ -53,13 +53,13 @@ func runInit(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	db, err := database.Connect(connStr)
+	db, err := database.ConnectURL(connStr)
 	if err != nil {
 		return err
 	}
 	defer db.Close(cmd.Context())
 
-	snap, err := discover.Schema(cmd.Context(), db, initSchema)
+	snap, err := discover.Schema(cmd.Context(), db.Conn(), initSchema)
 	if err != nil {
 		return err
 	}
