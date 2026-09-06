@@ -202,10 +202,13 @@ Creates **only** two hardcoded tables (`customers`, `orders`) and seed rows defi
 | AWS demo | `migrate` on source RDS before first `snapshot` (see [AWS_FREETIER_SETUP.md](AWS_FREETIER_SETUP.md)) |
 
 ```bash
-revenant migrate
+revenant migrate        # prompts: creates demo customers + orders tables
+revenant migrate --yes  # skip prompt (scripts only)
 ```
 
 **Requires:** `DATABASE_URL`
+
+You are right that most users never need this — `revenant init` against an existing DB is the real path. Consider removing `migrate` in a future release once docs/examples use `init` only.
 
 ---
 

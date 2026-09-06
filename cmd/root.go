@@ -14,9 +14,9 @@ var rootCmd = &cobra.Command{
 	Long: `Revenant connects to a PostgreSQL database, runs the checks in
 revenant.yaml, prints PASS/FAIL, and writes report.json / report.md.
 
-  revenant init     scaffold yaml from a live database
-	revenant migrate  create application tables and use the models
-	revenant snapshot  check the source database and create an RDS snapshot
+  revenant init      scaffold yaml from a live database
+  revenant migrate   demo only — sample customers/orders tables (prompts first)
+  revenant snapshot  check source DB and create an RDS snapshot
   revenant verify   run those checks
   revenant reap     clean up lingering orphaned cloud sandboxes`,
 }

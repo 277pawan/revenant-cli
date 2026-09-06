@@ -196,16 +196,34 @@ checks:
 
 ---
 
-## Planned checks (not built yet)
+## Checks we should add (honest priority)
 
-| Type | What it would do |
-|------|------------------|
-| `index` | Expected indexes exist |
-| `constraint` | Named constraints present |
-| `column` | Column types match expectation |
-| `max_row_count` | Table not unexpectedly huge |
+What you have today covers a **smoke test** after restore. What auditors and SREs actually ask for is broader.
 
-Open an issue if you need one of these for a real restore proof.
+| Priority | Check | Why it matters |
+|----------|-------|----------------|
+| **High** | `connect` / ping | Prove you can authenticate — before any SQL |
+| **High** | `not_empty` on critical tables | `row_count min:1` works but a named “critical tables” check is clearer |
+| **High** | `checksum` / row count **range** | `min` only — no “table exploded to 10× normal” detection |
+| **Medium** | `index` | Restored DB missing indexes = slow or broken app |
+| **Medium** | `column` / types | Schema drift after restore |
+| **Low** | `constraint` by name | FK check partly covers this |
+| **Low** | `max_row_count` | Nice for anomaly detection |
+
+The “planned” list in earlier docs (`index`, `column`, …) was aspirational — **not** committed work. Ship **checksum/range** and **connect** before more catalog introspection.
+
+---
+
+## Planned checks (not built — do not promise these yet)
+
+| Type | Status |
+|------|--------|
+| `index` | Idea only |
+| `column` | Idea only |
+| `constraint` | Idea only |
+| `max_row_count` | Idea only |
+
+Track real demand in GitHub issues before building.
 
 ---
 
