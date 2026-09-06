@@ -38,8 +38,32 @@ No Go. No npm. Copy a workflow, add secrets, done.
 ### Option 2 — Download binary
 
 1. Open [Releases](https://github.com/277pawan/revenant-cli/releases)
-2. Download for your OS (e.g. `revenant_0.1.0_linux_amd64.tar.gz`)
-3. `chmod +x revenant && ./revenant verify`
+2. Pick the file for **your OS** (see table below)
+3. Extract and install on your PATH so you can type `revenant` (not `./revenant`)
+
+| Your machine | Download |
+|--------------|----------|
+| Linux Intel/AMD | `revenant_0.1.0_linux_amd64.tar.gz` |
+| Linux ARM | `revenant_0.1.0_linux_arm64.tar.gz` |
+| Mac Intel | `revenant_0.1.0_darwin_amd64.tar.gz` |
+| Mac Apple Silicon | `revenant_0.1.0_darwin_arm64.tar.gz` |
+| Windows | `revenant_0.1.0_windows_amd64.zip` |
+
+Check yours: `uname -s` and `uname -m`
+
+```bash
+tar -xzf revenant_0.1.0_linux_amd64.tar.gz
+chmod +x revenant
+
+# Install globally (pick one):
+sudo install -m 755 revenant /usr/local/bin/revenant   # system-wide
+# OR
+mkdir -p ~/bin && mv revenant ~/bin/ && echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
+
+revenant --help    # works from any directory — no ./
+```
+
+**Why `./revenant`?** The `./` means “run the binary in *this folder*.” Once the binary is in a folder on your `PATH` (`/usr/local/bin`, `~/bin`), you type `revenant` only.
 
 ### Option 3 — Build from source (contributors)
 
@@ -58,10 +82,10 @@ go build -o revenant .
 export DATABASE_URL='postgres://user:pass@localhost:5432/mydb?sslmode=disable'
 
 # 2. Scaffold checks from your live schema
-./revenant init --plan my-app --force
+revenant init --plan my-app --force
 
 # 3. Run validation
-./revenant verify
+revenant verify
 ```
 
 Expected:
@@ -167,7 +191,15 @@ Flags:
 
 ### `revenant migrate`
 
-> **Demo / development only.** Creates sample `customers` and `orders` tables via GORM. Not needed for production — your app already has its own schema.
+> **Demo / learning only — not for real apps.**
+
+Creates **only** two hardcoded tables (`customers`, `orders`) and seed rows defined in `internal/demo/` in this repo. It does **not** read your app’s models or migrations.
+
+| Use case | What to do instead |
+|----------|-------------------|
+| Real project | Your app already has tables — use `revenant init` or write `revenant.yaml` by hand |
+| Try Revenant with zero setup | `revenant migrate` → `revenant init` → `revenant verify` on an empty local DB |
+| AWS demo | `migrate` on source RDS before first `snapshot` (see [AWS_FREETIER_SETUP.md](AWS_FREETIER_SETUP.md)) |
 
 ```bash
 revenant migrate
@@ -181,20 +213,24 @@ revenant migrate
 
 Lives in your repo root. Defines **what** to test — not your app code.
 
+**Full reference:** [CONFIG.md](CONFIG.md) — every field, every check type, examples, common mistakes.
+
+### Quick summary — 5 check types
+
+| `type` | One line | Key yaml fields |
+|--------|----------|-----------------|
+| `schema` | Tables exist | `expect_tables: [a, b]` |
+| `row_count` | Enough rows | `table`, `min` |
+| `foreign_key` | FK + no orphans | `table`, `references` |
+| `golden_query` | Your SQL rule | `query`, `expect_min` |
+| `freshness` | Data not too old | `table`, `column`, `max_age` |
+
 ```yaml
 plan: my-app
 
 database:
   engine: postgres
   connection: ${DATABASE_URL}
-
-# Optional — AWS RDS snapshot restore before checks
-recovery:
-  engine: aws-rds
-  source_identifier: my-rds-instance
-  region: us-east-1
-  use_freetier: true          # db.t3.micro
-  max_sandbox_age: 2h
 
 checks:
   - type: schema
@@ -218,15 +254,7 @@ checks:
     max_age: 24h
 ```
 
-### Check types
-
-| Type | Purpose |
-|------|---------|
-| `schema` | Tables exist |
-| `row_count` | Table has at least `min` rows |
-| `foreign_key` | FK exists and no orphan rows |
-| `golden_query` | Custom SQL returns `>= expect_min` |
-| `freshness` | Latest timestamp within `max_age` (RPO) |
+Optional AWS block — see [CONFIG.md](CONFIG.md#full-example-aws-restore--verify) and [AWS_FREETIER_SETUP.md](AWS_FREETIER_SETUP.md).
 
 ---
 
@@ -262,17 +290,17 @@ Full zero-cost setup: **[AWS_FREETIER_SETUP.md](AWS_FREETIER_SETUP.md)**
 Typical flow:
 
 ```bash
-# Optional demo tables on source
-./revenant migrate
+# Optional demo tables on source (demo command only — see migrate section)
+revenant migrate
 
 # Snapshot source (after checks pass)
-./revenant snapshot --config revenant-aws-freetier.yaml
+revenant snapshot --config revenant-aws-freetier.yaml
 
 # Restore latest snapshot → validate → destroy sandbox
-./revenant verify --config revenant-aws-freetier.yaml
+revenant verify --config revenant-aws-freetier.yaml
 
 # Safety net if a run crashed
-./revenant reap --max-age 4h --region us-east-1
+revenant reap --max-age 4h --region us-east-1
 ```
 
 ---

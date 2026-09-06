@@ -13,7 +13,7 @@ import (
 
 var migrateCmd = &cobra.Command{
 	Use:          "migrate",
-	Short:        "Create the application tables in PostgreSQL",
+	Short:        "Demo only: create sample customers/orders tables (not your app schema)",
 	SilenceUsage: true,
 	RunE:         runMigrate,
 }
