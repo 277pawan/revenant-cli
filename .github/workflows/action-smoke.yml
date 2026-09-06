@@ -1,0 +1,68 @@
+# Dogfood: verify the published GitHub Action + release binary work.
+# Uses service Postgres — no AWS, no go build. Any language repo can copy this pattern.
+
+name: Action Smoke Test
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  via-action:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: revenant
+          POSTGRES_PASSWORD: revenant
+          POSTGRES_DB: revenant_demo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U revenant -d revenant_demo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Seed schema
+        env:
+          DATABASE_URL: postgres://revenant:revenant@localhost:5432/revenant_demo?sslmode=disable
+        run: |
+          psql "$DATABASE_URL" <<'SQL'
+          CREATE TABLE customers (id SERIAL PRIMARY KEY, name TEXT, created_at TIMESTAMP DEFAULT NOW());
+          CREATE TABLE orders (id SERIAL PRIMARY KEY, customer_id INT REFERENCES customers(id), created_at TIMESTAMP DEFAULT NOW());
+          INSERT INTO customers (name) VALUES ('action-smoke');
+          INSERT INTO orders (customer_id) VALUES (1);
+          SQL
+
+      - uses: 277pawan/revenant-action@v1.0.1
+        with:
+          version: v0.1.0
+          command: init
+          args: --plan action-smoke --force -o revenant-action-smoke.yaml
+        env:
+          DATABASE_URL: postgres://revenant:revenant@localhost:5432/revenant_demo?sslmode=disable
+
+      - uses: 277pawan/revenant-action@v1.0.1
+        with:
+          version: v0.1.0
+          config: revenant-action-smoke.yaml
+        env:
+          DATABASE_URL: postgres://revenant:revenant@localhost:5432/revenant_demo?sslmode=disable
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: action-smoke-report
+          path: |
+            report.json
+            report.md
+          if-no-files-found: ignore
