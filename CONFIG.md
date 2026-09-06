@@ -47,6 +47,18 @@ Any `${VAR_NAME}` in `database.connection` is read from the shell or `.env`.
 
 ## Check types (all supported today)
 
+### `connect` — database reachable
+
+```yaml
+- type: connect
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| _(none)_ | | Pings Postgres before heavier checks |
+
+---
+
 ### `schema` — tables exist
 
 ```yaml
@@ -65,18 +77,35 @@ One result per table (PASS if exists, FAIL if missing).
 
 ---
 
-### `row_count` — minimum rows
+### `row_count` — row count range
 
 ```yaml
 - type: row_count
   table: orders
   min: 100
+  max: 500000   # optional — fail if restore exploded
 ```
 
 | Field | Required | Description |
 |-------|----------|-------------|
 | `table` | yes | Table name |
 | `min` | yes | Row count must be `>= min` |
+| `max` | no | Row count must be `<= max` |
+
+---
+
+### `index` — indexes exist
+
+```yaml
+- type: index
+  expect_indexes:
+    - orders_pkey
+    - idx_orders_customer_id
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `expect_indexes` | yes | Index names in `public` schema |
 
 ---
 
@@ -147,6 +176,7 @@ database:
   connection: ${DATABASE_URL}
 
 checks:
+  - type: connect
   - type: schema
     expect_tables: [users, orders, payments]
 

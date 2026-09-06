@@ -15,10 +15,11 @@ var rootCmd = &cobra.Command{
 revenant.yaml, prints PASS/FAIL, and writes report.json / report.md.
 
   revenant init      scaffold yaml from a live database
+  revenant doctor    check config, env vars, and DB connectivity
   revenant migrate   demo only — sample customers/orders tables (prompts first)
   revenant snapshot  check source DB and create an RDS snapshot
-  revenant verify   run those checks
-  revenant reap     clean up lingering orphaned cloud sandboxes`,
+  revenant verify    run those checks
+  revenant reap      clean up lingering orphaned cloud sandboxes`,
 }
 
 // Execute is called from main.go. Cobra prints the error and we exit 1 so

@@ -23,9 +23,9 @@ Revenant connects to PostgreSQL (local or AWS RDS), runs validation checks from 
 No Go. No npm. Copy a workflow, add secrets, done.
 
 ```yaml
-- uses: 277pawan/revenant-action@v1.0.2
+- uses: 277pawan/revenant-action@v1.0.3
   with:
-    version: v0.1.0
+    version: v0.1.1
     config: revenant.yaml
   env:
     DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -43,16 +43,16 @@ No Go. No npm. Copy a workflow, add secrets, done.
 
 | Your machine | Download |
 |--------------|----------|
-| Linux Intel/AMD | `revenant_0.1.0_linux_amd64.tar.gz` |
-| Linux ARM | `revenant_0.1.0_linux_arm64.tar.gz` |
-| Mac Intel | `revenant_0.1.0_darwin_amd64.tar.gz` |
-| Mac Apple Silicon | `revenant_0.1.0_darwin_arm64.tar.gz` |
-| Windows | `revenant_0.1.0_windows_amd64.zip` |
+| Linux Intel/AMD | `revenant_0.1.1_linux_amd64.tar.gz` |
+| Linux ARM | `revenant_0.1.1_linux_arm64.tar.gz` |
+| Mac Intel | `revenant_0.1.1_darwin_amd64.tar.gz` |
+| Mac Apple Silicon | `revenant_0.1.1_darwin_arm64.tar.gz` |
+| Windows | `revenant_0.1.1_windows_amd64.zip` |
 
 Check yours: `uname -s` and `uname -m`
 
 ```bash
-tar -xzf revenant_0.1.0_linux_amd64.tar.gz
+tar -xzf revenant_0.1.1_linux_amd64.tar.gz
 chmod +x revenant
 
 # Install globally (pick one):
@@ -106,11 +106,24 @@ Wrote report.md
 
 | Command | What it does |
 |---------|----------------|
+| [`revenant doctor`](#revenant-doctor) | Check config, env vars, and DB connectivity |
 | [`revenant init`](#revenant-init) | Scan a live database → write starter `revenant.yaml` |
 | [`revenant verify`](#revenant-verify) | Run all checks; restore AWS snapshot first if configured |
 | [`revenant snapshot`](#revenant-snapshot) | Validate source DB, then create an RDS snapshot |
 | [`revenant reap`](#revenant-reap) | Delete orphaned AWS sandbox instances (safety net) |
-| [`revenant migrate`](#revenant-migrate) | **Dev/demo only** — create sample `customers` / `orders` tables |
+| [`revenant migrate`](#revenant-migrate) | **Demo only** — sample tables (prompts first) |
+
+---
+
+### `revenant doctor`
+
+Validate setup before a real verify run.
+
+```bash
+revenant doctor [-c revenant.yaml]
+```
+
+Checks: config loads, check fields valid, `DATABASE_URL` connects, AWS env hints if `recovery:` is set.
 
 ---
 
@@ -218,24 +231,22 @@ Lives in your repo root. Defines **what** to test — not your app code.
 
 **Full reference:** [CONFIG.md](CONFIG.md) — every field, every check type, examples, common mistakes.
 
-### Quick summary — 5 check types
+### Quick summary — 7 check types
 
 | `type` | One line | Key yaml fields |
 |--------|----------|-----------------|
+| `connect` | DB accepts connections | _(none)_ |
 | `schema` | Tables exist | `expect_tables: [a, b]` |
-| `row_count` | Enough rows | `table`, `min` |
+| `row_count` | Row count in range | `table`, `min`, `max` (optional) |
 | `foreign_key` | FK + no orphans | `table`, `references` |
 | `golden_query` | Your SQL rule | `query`, `expect_min` |
 | `freshness` | Data not too old | `table`, `column`, `max_age` |
+| `index` | Indexes exist | `expect_indexes: [name, …]` |
 
 ```yaml
-plan: my-app
-
-database:
-  engine: postgres
-  connection: ${DATABASE_URL}
-
 checks:
+  - type: connect
+
   - type: schema
     expect_tables: [customers, orders]
 

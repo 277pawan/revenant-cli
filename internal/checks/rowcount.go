@@ -32,17 +32,28 @@ func RowCount(ctx context.Context, conn *pgx.Conn, item config.Check) ([]Result,
 	}
 
 	name := "row_count:" + item.Table
-	if count >= *item.Min {
+	if count < *item.Min {
 		return []Result{{
 			Name:    name,
-			Status:  StatusPass,
-			Message: fmt.Sprintf("%s row count %d >= %d", item.Table, count, *item.Min),
+			Status:  StatusFail,
+			Message: fmt.Sprintf("%s row count %d < min %d", item.Table, count, *item.Min),
+		}}, nil
+	}
+	if item.Max != nil && count > *item.Max {
+		return []Result{{
+			Name:    name,
+			Status:  StatusFail,
+			Message: fmt.Sprintf("%s row count %d > max %d", item.Table, count, *item.Max),
 		}}, nil
 	}
 
+	msg := fmt.Sprintf("%s row count %d >= %d", item.Table, count, *item.Min)
+	if item.Max != nil {
+		msg = fmt.Sprintf("%s row count %d within [%d, %d]", item.Table, count, *item.Min, *item.Max)
+	}
 	return []Result{{
 		Name:    name,
-		Status:  StatusFail,
-		Message: fmt.Sprintf("%s row count %d < min %d", item.Table, count, *item.Min),
+		Status:  StatusPass,
+		Message: msg,
 	}}, nil
 }

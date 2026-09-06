@@ -24,11 +24,11 @@ The action repo has **no database models, no demo tables** — only a script tha
 ## How GitHub Releases work
 
 1. You finish a version of the CLI locally.
-2. You create a git tag: `git tag v0.1.0`
-3. You push the tag: `git push origin v0.1.0`
+2. You create a git tag: `git tag v0.1.1`
+3. You push the tag: `git push origin v0.1.1`
 4. GitHub sees the tag → runs `.github/workflows/release.yml`
 5. **GoReleaser** builds `revenant` for each OS/arch and uploads `.tar.gz` / `.zip` files to:
-   **GitHub → your repo → Releases → v0.1.0**
+   **GitHub → your repo → Releases → v0.1.1**
 
 Users download `revenant_0.1.0_linux_amd64.tar.gz` (or the Action does it for them).
 
@@ -41,12 +41,12 @@ You never upload binaries by hand.
 ```bash
 # 1. Commit everything on main
 git add -A
-git commit -m "Prepare v0.1.0 release"
+git commit -m "Prepare v0.1.1 release"
 git push origin main
 
 # 2. Tag and push (this triggers the Release workflow)
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 
 # 3. Watch Actions tab → "Release" job → should go green
 
@@ -55,7 +55,7 @@ git push origin v0.1.0
 # 5. Push revenant-action repo and tag v1 (see revenant-action/README.md)
 ```
 
-If Release fails, open the workflow log. Common fixes: tests failing, tag format wrong (must be `v0.1.0` not `0.1.0`).
+If Release fails, open the workflow log. Common fixes: tests failing, tag format wrong (must be `v0.1.1` not `0.1.0`).
 
 ---
 
@@ -66,7 +66,7 @@ In **any** repository (React app, Django API, Go microservice):
 ```yaml
 - uses: 277pawan/revenant-action@v1
   with:
-    version: v0.1.0
+    version: v0.1.1
     config: revenant.yaml
   env:
     DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -85,8 +85,8 @@ No Go. No npm. No connection to your application code.
 
 ## Versioning rules
 
-- **CLI releases**: `v0.1.0`, `v0.2.0` (semver tags on `revenant-cli`)
-- **Action releases**: `v1`, `v1.0.0` — points at a default CLI version in `action.yml`; users can override with `version: v0.1.0`
+- **CLI releases**: `v0.1.1`, `v0.2.0` (semver tags on `revenant-cli`)
+- **Action releases**: `v1`, `v1.0.0` — points at a default CLI version in `action.yml`; users can override with `version: v0.1.1`
 
 When you ship CLI `v0.2.0`, users pin `version: v0.2.0` in their workflow. You can bump the action's default later.
 
@@ -102,14 +102,14 @@ When you ship CLI `v0.2.0`, users pin `version: v0.2.0` in their workflow. You c
 
 ---
 
-## After v0.1.0: switch dogfood AWS workflow to binary
+## After v0.1.1: switch dogfood AWS workflow to binary
 
 Replace `go build` in `free-restore-test.yml` with:
 
 ```yaml
 - uses: 277pawan/revenant-action@v1
   with:
-    version: v0.1.0
+    version: v0.1.1
     config: revenant-aws-freetier.yaml
 ```
 

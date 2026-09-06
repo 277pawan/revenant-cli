@@ -38,23 +38,25 @@ type Recovery struct {
 // Check is a *union* of every check type we support.
 // Unused fields stay empty depending on `type`.
 //
+//	type: connect      -> (no fields)
 //	type: schema       -> ExpectTables
-//	type: row_count    -> Table, Min
+//	type: row_count    -> Table, Min, Max (optional)
 //	type: foreign_key  -> Table, References
 //	type: golden_query -> Query, ExpectMin
-//
-// When you add freshness/RPO later, add Column / MaxAge here and a new
-// case in internal/checks/runner.go — you do not need a new yaml file format.
+//	type: freshness    -> Table, Column, MaxAge
+//	type: index        -> ExpectIndexes
 type Check struct {
-	Type         string   `yaml:"type"`
-	ExpectTables []string `yaml:"expect_tables,omitempty"`
-	Table        string   `yaml:"table,omitempty"`
-	Min          *int     `yaml:"min,omitempty"` // pointer so we can tell "missing" from "0"
-	References   string   `yaml:"references,omitempty"`
-	Query        string   `yaml:"query,omitempty"`
-	ExpectMin    *int     `yaml:"expect_min,omitempty"`
-	Column       string   `yaml:"column,omitempty"`
-	MaxAge       string   `yaml:"max_age,omitempty"`
+	Type          string   `yaml:"type"`
+	ExpectTables  []string `yaml:"expect_tables,omitempty"`
+	Table         string   `yaml:"table,omitempty"`
+	Min           *int     `yaml:"min,omitempty"`
+	Max           *int     `yaml:"max,omitempty"`
+	References    string   `yaml:"references,omitempty"`
+	Query         string   `yaml:"query,omitempty"`
+	ExpectMin     *int     `yaml:"expect_min,omitempty"`
+	Column        string   `yaml:"column,omitempty"`
+	MaxAge        string   `yaml:"max_age,omitempty"`
+	ExpectIndexes []string `yaml:"expect_indexes,omitempty"`
 }
 
 // Load reads path, unmarshals YAML, and expands ${ENV} in the connection string.
@@ -77,6 +79,9 @@ func Load(path string) (*File, error) {
 	}
 	if len(cfg.Checks) == 0 {
 		return nil, fmt.Errorf("revenant.yaml: at least one check is required")
+	}
+	if err := ValidateChecks(cfg.Checks); err != nil {
+		return nil, err
 	}
 
 	var missing []string

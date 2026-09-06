@@ -41,6 +41,7 @@ archives:
     files:
       - LICENSE
       - README.md
+      - CONFIG.md
       - examples/revenant.yaml
       - examples/workflows/*
 

@@ -17,9 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: 277pawan/revenant-action@v1.0.2
+      - uses: 277pawan/revenant-action@v1.0.3
         with:
-          version: v0.1.0
+          version: v0.1.1
           config: revenant-aws.yaml
           command: verify
         env:
@@ -30,10 +30,10 @@ jobs:
           SANDBOX_PASSWORD: ${{ secrets.SANDBOX_PASSWORD }}
           SANDBOX_DBNAME: postgres
 
-      - uses: 277pawan/revenant-action@v1.0.2
+      - uses: 277pawan/revenant-action@v1.0.3
         if: always()
         with:
-          version: v0.1.0
+          version: v0.1.1
           command: reap
           args: --max-age 4h --region us-east-1
         env:

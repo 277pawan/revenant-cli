@@ -36,6 +36,8 @@ func RunAll(conn *pgx.Conn, items []config.Check) ([]Result, error) {
 		)
 
 		switch item.Type {
+		case "connect":
+			batch, err = Connect(ctx, conn, item)
 		case "schema":
 			batch, err = Schema(ctx, conn, item)
 		case "row_count":
@@ -46,6 +48,8 @@ func RunAll(conn *pgx.Conn, items []config.Check) ([]Result, error) {
 			batch, err = Golden(ctx, conn, item)
 		case "freshness":
 			batch, err = Freshness(ctx, conn, item)
+		case "index":
+			batch, err = Index(ctx, conn, item)
 		default:
 			return nil, fmt.Errorf("checks[%d]: unknown type %q", i, item.Type)
 		}
