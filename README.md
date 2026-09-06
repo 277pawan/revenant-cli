@@ -334,7 +334,7 @@ Upload both as workflow artifacts (`actions/upload-artifact@v4`).
 
 ```
 revenant-cli/
-├── cmd/           # init, verify, snapshot, reap, migrate
+├── cmd/           # doctor, init, verify, snapshot, reap, migrate
 ├── internal/
 │   ├── checks/    # schema, row_count, foreign_key, golden_query, freshness
 │   ├── recovery/  # AWS RDS restore + reaper
