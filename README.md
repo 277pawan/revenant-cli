@@ -23,7 +23,7 @@ Revenant connects to PostgreSQL (local or AWS RDS), runs validation checks from 
 No Go. No npm. Copy a workflow, add secrets, done.
 
 ```yaml
-- uses: 277pawan/revenant-action@v1.0.1
+- uses: 277pawan/revenant-action@v1.0.2
   with:
     version: v0.1.0
     config: revenant.yaml

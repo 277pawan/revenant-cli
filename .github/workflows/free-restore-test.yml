@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: 277pawan/revenant-action@v1.0.1
+      - uses: 277pawan/revenant-action@v1.0.2
         with:
           version: v0.1.0
           config: revenant-aws-freetier.yaml
@@ -31,7 +31,7 @@ jobs:
           SANDBOX_PASSWORD: ${{ secrets.SANDBOX_PASSWORD }}
           SANDBOX_DBNAME: postgres
 
-      - uses: 277pawan/revenant-action@v1.0.1
+      - uses: 277pawan/revenant-action@v1.0.2
         if: always()
         with:
           version: v0.1.0

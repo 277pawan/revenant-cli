@@ -43,7 +43,7 @@ jobs:
           INSERT INTO orders (customer_id) VALUES (1);
           SQL
 
-      - uses: 277pawan/revenant-action@v1.0.1
+      - uses: 277pawan/revenant-action@v1.0.2
         with:
           version: v0.1.0
           command: init
@@ -51,7 +51,7 @@ jobs:
         env:
           DATABASE_URL: postgres://revenant:revenant@localhost:5432/revenant_demo?sslmode=disable
 
-      - uses: 277pawan/revenant-action@v1.0.1
+      - uses: 277pawan/revenant-action@v1.0.2
         with:
           version: v0.1.0
           config: revenant-action-smoke.yaml
