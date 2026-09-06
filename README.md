@@ -244,13 +244,14 @@ Secrets needed for AWS: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `SANDBOX_U
 
 ### Publish the Action on Marketplace
 
-The action lives in a separate repo so consumers never clone Go code:
+GitHub no longer uses `marketplace/actions/new` (404). Use the **blue banner** on the action repo:
 
-1. **Action:** https://github.com/277pawan/revenant-action  
-2. **Publish guide:** [MARKETPLACE.md](https://github.com/277pawan/revenant-action/blob/main/MARKETPLACE.md)  
-3. **One-time:** https://github.com/marketplace/actions/new → select `revenant-action` → publish  
+1. Open https://github.com/277pawan/revenant-action  
+2. Click **Draft a release** (in the banner)  
+3. Check **Publish this Action to the GitHub Marketplace**  
+4. Pick category → **Publish release**  
 
-After listing, users discover it under **GitHub Marketplace → Actions**.
+Full steps: [revenant-action/MARKETPLACE.md](https://github.com/277pawan/revenant-action/blob/main/MARKETPLACE.md)
 
 ---
 
