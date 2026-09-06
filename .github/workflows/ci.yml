@@ -1,0 +1,77 @@
+name: CI
+
+# Language-agnostic smoke test: any repo can copy this pattern.
+# Spins up Postgres in CI, runs revenant init + verify — no AWS bill.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  local-verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: revenant
+          POSTGRES_PASSWORD: revenant
+          POSTGRES_DB: revenant_demo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U revenant -d revenant_demo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://revenant:revenant@localhost:5432/revenant_demo?sslmode=disable
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build Revenant
+        run: go build -o revenant .
+
+      - name: Seed demo schema
+        run: |
+          psql "$DATABASE_URL" <<'SQL'
+          CREATE TABLE customers (
+            id SERIAL PRIMARY KEY,
+            name TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW()
+          );
+          CREATE TABLE orders (
+            id SERIAL PRIMARY KEY,
+            customer_id INT NOT NULL REFERENCES customers(id),
+            created_at TIMESTAMP DEFAULT NOW()
+          );
+          INSERT INTO customers (name) VALUES ('ci-user');
+          INSERT INTO orders (customer_id) VALUES (1);
+          SQL
+
+      - name: Init config from live database
+        run: ./revenant init --plan ci-demo --force -o revenant-ci.yaml
+
+      - name: Verify
+        run: ./revenant verify --config revenant-ci.yaml
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-report
+          path: |
+            report.json
+            report.md
+          if-no-files-found: ignore

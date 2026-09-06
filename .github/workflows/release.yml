@@ -1,0 +1,36 @@
+name: Release
+
+# HOW THIS WORKS (plain English):
+# 1. You tag a version:  git tag v0.1.0 && git push origin v0.1.0
+# 2. This workflow runs GoReleaser.
+# 3. GoReleaser compiles revenant for Linux/Mac/Windows and uploads zip/tar.gz
+#    to GitHub → Releases tab on the repo.
+# 4. The revenant-action repo downloads those binaries — users never need Go.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: '~> v2'
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
