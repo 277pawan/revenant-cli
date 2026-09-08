@@ -1,0 +1,65 @@
+name: Create RDS Snapshot (source check first)
+
+# Validates live database-1, then creates a new RDS snapshot.
+#
+# GitHub Secrets (you already have these):
+#   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+#   SANDBOX_USER, SANDBOX_PASSWORD  — same master user/pass as source RDS
+#
+# DATABASE_URL is built in the workflow below (no separate secret needed).
+# Edit RDS_HOST if your endpoint changes.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  RDS_HOST: database-1.cxas2mi0obxk.eu-west-2.rds.amazonaws.com
+  RDS_PORT: "5432"
+  RDS_DB: postgres
+  AWS_REGION: eu-west-2
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build DATABASE_URL for live source RDS
+        env:
+          RDS_USER: ${{ secrets.SANDBOX_USER }}
+          RDS_PASSWORD: ${{ secrets.SANDBOX_PASSWORD }}
+        run: |
+          echo "DATABASE_URL=postgresql://${RDS_USER}:${RDS_PASSWORD}@${RDS_HOST}:${RDS_PORT}/${RDS_DB}?sslmode=require" >> "$GITHUB_ENV"
+
+      - uses: 277pawan/revenant-action@v1.0.3
+        with:
+          version: v0.1.1
+          config: revenant-aws-freetier.yaml
+          command: snapshot
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ env.AWS_REGION }}
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: snapshot-report
+          path: |
+            report.json
+            report.md
+          if-no-files-found: ignore
+
+      - name: Summary
+        if: success()
+        run: |
+          {
+            echo "## RDS snapshot created"
+            echo ""
+            echo "Source checks passed on live \`database-1\`. A new manual snapshot was created."
+            echo "Next: run **Free Restore Validation** workflow."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,8 +1,13 @@
 name: Free Restore Validation (AWS Free Tier)
 
-# Dogfood workflow for this repo's AWS restore path.
-# Uses the same published binary + action that external users get (not go build).
-# Requires GitHub Secrets: AWS_*, SANDBOX_* (see AWS_FREETIER_SETUP.md).
+# Full DR drill: snapshot source → restore to sandbox → validate → reap.
+#
+# GitHub Secrets:
+#   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+#   SANDBOX_USER, SANDBOX_PASSWORD
+#
+# DATABASE_URL is built from RDS_HOST + SANDBOX_* (no DATABASE_URL secret).
+# Edit RDS_HOST below if your endpoint changes.
 
 on:
   schedule:
@@ -12,11 +17,36 @@ on:
 permissions:
   contents: read
 
+env:
+  RDS_HOST: database-1.cxas2mi0obxk.eu-west-2.rds.amazonaws.com
+  RDS_PORT: "5432"
+  RDS_DB: postgres
+  AWS_REGION: eu-west-2
+
 jobs:
   restore-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Build DATABASE_URL for live source RDS
+        env:
+          RDS_USER: ${{ secrets.SANDBOX_USER }}
+          RDS_PASSWORD: ${{ secrets.SANDBOX_PASSWORD }}
+        run: |
+          echo "DATABASE_URL=postgresql://${RDS_USER}:${RDS_PASSWORD}@${RDS_HOST}:${RDS_PORT}/${RDS_DB}?sslmode=require" >> "$GITHUB_ENV"
+
+      - name: Validate source and create snapshot
+        uses: 277pawan/revenant-action@v1.0.3
+        with:
+          version: v0.1.1
+          config: revenant-aws-freetier.yaml
+          command: snapshot
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ env.AWS_REGION }}
 
       - uses: 277pawan/revenant-action@v1.0.3
         with:
@@ -26,7 +56,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: us-east-1
+          AWS_REGION: ${{ env.AWS_REGION }}
           SANDBOX_USER: ${{ secrets.SANDBOX_USER }}
           SANDBOX_PASSWORD: ${{ secrets.SANDBOX_PASSWORD }}
           SANDBOX_DBNAME: postgres
@@ -36,11 +66,11 @@ jobs:
         with:
           version: v0.1.1
           command: reap
-          args: --max-age 4h --region us-east-1
+          args: --max-age 4h --region eu-west-2
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: us-east-1
+          AWS_REGION: ${{ env.AWS_REGION }}
 
       - name: Upload Validation Report
         if: always()
@@ -61,5 +91,5 @@ jobs:
             echo ""
             echo "Download the **restore-report** artifact for report.json / report.md."
             echo ""
-            echo "Common causes: missing AWS secrets, no RDS snapshot, sandbox credentials wrong."
+            echo "Common causes: AWS secrets wrong, source checks failed, snapshot restore blocked, freshness max_age."
           } >> "$GITHUB_STEP_SUMMARY"

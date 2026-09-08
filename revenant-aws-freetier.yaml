@@ -11,6 +11,20 @@
 # 4. Get your RDS instance ID from AWS Console
 # 5. Replace "prod-database-instance" with your instance ID below
 # 6. Set AWS credentials in GitHub Secrets or .env file
+#
+# SNAPSHOT + RESTORE FLOW:
+#   snapshot — checks live DATABASE_URL, then creates RDS snapshot (see cmd/snapshot.go)
+#   verify   — restores latest snapshot to sandbox, runs checks, destroys sandbox
+#
+# Local:
+#   export DATABASE_URL="postgres://...@database-1.../postgres?sslmode=require"
+#   export AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... AWS_REGION=eu-west-2
+#   revenant snapshot --config revenant-aws-freetier.yaml
+#   revenant verify   --config revenant-aws-freetier.yaml
+#
+# GitHub Actions (no DATABASE_URL secret — built in workflow from RDS_HOST + SANDBOX_*):
+#   .github/workflows/free-snapshot.yml
+#   .github/workflows/free-restore-test.yml
 
 plan: aws-free-tier-validation
 
