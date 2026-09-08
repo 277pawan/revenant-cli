@@ -1,0 +1,17 @@
+# Minimal config for: revenant snapshot
+# Connects to LIVE source RDS via DATABASE_URL (built in CI workflow).
+# Does NOT need SANDBOX_* — those are only for verify (restored sandbox).
+
+plan: aws-snapshot
+
+database:
+  engine: postgres
+  connection: ${DATABASE_URL}
+
+recovery:
+  engine: aws-rds
+  source_identifier: database-1
+  region: eu-west-2
+
+checks:
+  - type: connect
