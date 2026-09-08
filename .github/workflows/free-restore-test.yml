@@ -42,6 +42,7 @@ jobs:
           version: v0.1.1
           config: revenant-aws-freetier.yaml
           command: snapshot
+          args: --config revenant-aws-freetier.yaml
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
